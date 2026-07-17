@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Motrix</string>
+
+    <!-- Navigation -->
+    <string name="nav_downloads">Downloads</string>
+    <string name="nav_new_task">New Task</string>
+    <string name="nav_settings">Settings</string>
+    <string name="nav_browser">Browser</string>
+    <string name="nav_about">About</string>
+
+    <!-- Task Status -->
+    <string name="status_active">Active</string>
+    <string name="status_waiting">Waiting</string>
+    <string name="status_paused">Paused</string>
+    <string name="status_error">Error</string>
+    <string name="status_complete">Complete</string>
+    <string name="status_seeding">Seeding</string>
+
+    <!-- Task List -->
+    <string name="tab_active">Active</string>
+    <string name="tab_waiting">Waiting</string>
+    <string name="tab_stopped">Stopped</string>
+    <string name="no_active_downloads">No active downloads</string>
+    <string name="no_waiting_downloads">No waiting downloads</string>
+    <string name="no_completed_downloads">No completed downloads</string>
+
+    <!-- Delete dialog -->
+    <string name="delete_title">Delete Download</string>
+    <string name="delete_message">Delete \"%s\"?</string>
+    <string name="delete_choose">Choose what to delete:</string>
+    <string name="delete_only_task">Delete Only Task</string>
+    <string name="delete_with_file">Delete With File</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Task Actions -->
+    <string name="action_pause">Pause</string>
+    <string name="action_resume">Resume</string>
+    <string name="action_remove">Remove</string>
+    <string name="action_force_remove">Force Remove</string>
+    <string name="action_pause_all">Pause All</string>
+    <string name="action_resume_all">Resume All</string>
+    <string name="action_purge">Purge Completed</string>
+    <string name="action_sync_trackers">Sync Trackers</string>
+    <string name="action_start_download">Start Download</string>
+    <string name="action_add_download">Add Download</string>
+
+    <!-- Add Task -->
+    <string name="add_task_title">New Download</string>
+    <string name="add_task_uri_tab">URI</string>
+    <string name="add_task_torrent_tab">Torrent</string>
+    <string name="add_task_urls_hint">Enter URLs, one per line</string>
+    <string name="add_task_file_name_hint">File Name (auto-detected)</string>
+    <string name="add_task_select_torrent">Select Torrent File</string>
+    <string name="add_task_no_torrent">No torrent file selected</string>
+    <string name="add_task_advanced">Advanced Options</string>
+    <string name="add_task_user_agent">User Agent</string>
+    <string name="add_task_referer">Referer</string>
+    <string name="add_task_cookie">Cookie</string>
+    <string name="add_task_authorization">Authorization</string>
+    <string name="add_task_max_connections">Max Connections</string>
+    <string name="add_task_split">Split</string>
+    <string name="add_task_started">Download added</string>
+    <string name="start">Start</string>
+    <string name="back">Back</string>
+
+    <!-- Task Detail -->
+    <string name="detail_general">General</string>
+    <string name="detail_files">Files</string>
+    <string name="detail_peers">Peers</string>
+    <string name="detail_status">Status</string>
+    <string name="detail_gid">GID</string>
+    <string name="detail_name">Name</string>
+    <string name="detail_directory">Directory</string>
+    <string name="detail_total_size">Total Size</string>
+    <string name="detail_completed">Completed</string>
+    <string name="detail_download_speed">Download Speed</string>
+    <string name="detail_upload_speed">Upload Speed</string>
+    <string name="detail_connections">Connections</string>
+    <string name="detail_no_peers">No peers connected</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_auto">Auto</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_lang_en">English</string>
+    <string name="settings_lang_ar">العربية</string>
+    <string name="settings_downloads">Downloads</string>
+    <string name="settings_max_concurrent">Max Concurrent Downloads</string>
+    <string name="settings_max_connections">Max Connections per Server</string>
+    <string name="settings_split">Split</string>
+    <string name="settings_bittorrent">BitTorrent</string>
+    <string name="settings_seed_ratio">Seed Ratio</string>
+    <string name="settings_seed_time">Seed Time (minutes)</string>
+    <string name="settings_keep_seeding">Keep Seeding</string>
+    <string name="settings_auto_sync_trackers">Auto Sync Trackers</string>
+    <string name="settings_network">Network</string>
+    <string name="settings_enable_proxy">Enable Proxy</string>
+    <string name="settings_proxy_server">Proxy Server</string>
+    <string name="settings_user_agent">User Agent</string>
+    <string name="settings_behavior">Behavior</string>
+    <string name="settings_enable_notifications">Enable Notifications</string>
+    <string name="settings_resume_on_start">Resume All on Start</string>
+    <string name="settings_about">About</string>
+    <string name="settings_version">Motrix Android v1.0.0</string>
+    <string name="settings_engine_info">Download manager powered by aria2</string>
+
+    <!-- Browser -->
+    <string name="browser_title">Browser</string>
+    <string name="browser_enter_url">Enter URL</string>
+
+    <!-- Common -->
+    <string name="save">Save</string>
+    <string name="loading">Loading…</string>
+    <string name="no_downloads">No downloads</string>
+    <string name="error_generic">An error occurred</string>
+    <string name="error_engine">Failed to start download engine</string>
+    <string name="error_connection">Connection error</string>
+    <string name="confirm">Confirm</string>
+    <string name="delete">Delete</string>
+</resources>

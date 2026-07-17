@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Motrix</string>
+
+    <!-- Navigation -->
+    <string name="nav_downloads">التنزيلات</string>
+    <string name="nav_new_task">تنزيل جديد</string>
+    <string name="nav_settings">الإعدادات</string>
+    <string name="nav_browser">المتصفح</string>
+    <string name="nav_about">حول</string>
+
+    <!-- Task Status -->
+    <string name="status_active">نشط</string>
+    <string name="status_waiting">بانتظار</string>
+    <string name="status_paused">متوقف مؤقتاً</string>
+    <string name="status_error">خطأ</string>
+    <string name="status_complete">مكتمل</string>
+    <string name="status_seeding">يُرسل</string>
+
+    <!-- Task List -->
+    <string name="tab_active">نشط</string>
+    <string name="tab_waiting">بانتظار</string>
+    <string name="tab_stopped">متوقف</string>
+    <string name="no_active_downloads">لا توجد تنزيلات نشطة</string>
+    <string name="no_waiting_downloads">لا توجد تنزيلات بانتظار</string>
+    <string name="no_completed_downloads">لا توجد تنزيلات مكتملة</string>
+
+    <!-- Delete dialog -->
+    <string name="delete_title">حذف التنزيل</string>
+    <string name="delete_message">حذف \"%s\"؟</string>
+    <string name="delete_choose">اختر نوع الحذف:</string>
+    <string name="delete_only_task">حذف المهمة فقط</string>
+    <string name="delete_with_file">حذف مع الملف</string>
+    <string name="cancel">إلغاء</string>
+
+    <!-- Task Actions -->
+    <string name="action_pause">إيقاف مؤقت</string>
+    <string name="action_resume">استئناف</string>
+    <string name="action_remove">إزالة</string>
+    <string name="action_force_remove">إزالة قسرية</string>
+    <string name="action_pause_all">إيقاف الكل مؤقتاً</string>
+    <string name="action_resume_all">استئناف الكل</string>
+    <string name="action_purge">مسح المنجز</string>
+    <string name="action_sync_trackers">مزامنة المتتبعين</string>
+    <string name="action_start_download">بدء التنزيل</string>
+    <string name="action_add_download">إضافة تنزيل</string>
+
+    <!-- Add Task -->
+    <string name="add_task_title">تنزيل جديد</string>
+    <string name="add_task_uri_tab">رابط</string>
+    <string name="add_task_torrent_tab">تورنت</string>
+    <string name="add_task_urls_hint">أدخل الروابط، واحد لكل سطر</string>
+    <string name="add_task_file_name_hint">اسم الملف (تلقائي)</string>
+    <string name="add_task_select_torrent">اختيار ملف تورنت</string>
+    <string name="add_task_no_torrent">لم يتم اختيار ملف تورنت</string>
+    <string name="add_task_advanced">خيارات متقدمة</string>
+    <string name="add_task_user_agent">وكيل المستخدم</string>
+    <string name="add_task_referer">الرابط المحول</string>
+    <string name="add_task_cookie">ملفات تعريف الارتباط</string>
+    <string name="add_task_authorization">التفويض</string>
+    <string name="add_task_max_connections">الحد الأقصى للاتصالات</string>
+    <string name="add_task_split">تقسيم</string>
+    <string name="add_task_started">تمت إضافة التنزيل</string>
+    <string name="start">بدء</string>
+    <string name="back">رجوع</string>
+
+    <!-- Task Detail -->
+    <string name="detail_general">عام</string>
+    <string name="detail_files">الملفات</string>
+    <string name="detail_peers">الأقران</string>
+    <string name="detail_status">الحالة</string>
+    <string name="detail_gid">المعرّف</string>
+    <string name="detail_name">الاسم</string>
+    <string name="detail_directory">المجلد</string>
+    <string name="detail_total_size">الحجم الإجمالي</string>
+    <string name="detail_completed">مكتمل</string>
+    <string name="detail_download_speed">سرعة التنزيل</string>
+    <string name="detail_upload_speed">سرعة الرفع</string>
+    <string name="detail_connections">الاتصالات</string>
+    <string name="detail_no_peers">لا أقران متصلون</string>
+
+    <!-- Settings -->
+    <string name="settings_title">الإعدادات</string>
+    <string name="settings_appearance">المظهر</string>
+    <string name="settings_theme">السمة</string>
+    <string name="settings_theme_auto">تلقائي</string>
+    <string name="settings_theme_light">فاتح</string>
+    <string name="settings_theme_dark">داكن</string>
+    <string name="settings_language">اللغة</string>
+    <string name="settings_lang_en">English</string>
+    <string name="settings_lang_ar">العربية</string>
+    <string name="settings_downloads">التنزيلات</string>
+    <string name="settings_max_concurrent">الحد الأقصى للتنزيلات المتزامنة</string>
+    <string name="settings_max_connections">الحد الأقصى للاتصالات لكل خادم</string>
+    <string name="settings_split">التقسيم</string>
+    <string name="settings_bittorrent">بيتتورنت</string>
+    <string name="settings_seed_ratio">نسبة الزرع</string>
+    <string name="settings_seed_time">وقت الزرع (دقائق)</string>
+    <string name="settings_keep_seeding">الإبقاء على الزرع</string>
+    <string name="settings_auto_sync_trackers">مزامنة المتتبعين تلقائياً</string>
+    <string name="settings_network">الشبكة</string>
+    <string name="settings_enable_proxy">تفعيل البروكسي</string>
+    <string name="settings_proxy_server">خادم البروكسي</string>
+    <string name="settings_user_agent">وكيل المستخدم</string>
+    <string name="settings_behavior">السلوك</string>
+    <string name="settings_enable_notifications">تفعيل الإشعارات</string>
+    <string name="settings_resume_on_start">استئناف الكل عند بدء التشغيل</string>
+    <string name="settings_about">حول</string>
+    <string name="settings_version">موتريكس أندرويد الإصدار 1.0.0</string>
+    <string name="settings_engine_info">مدير التنزيلات بمحرك aria2</string>
+
+    <!-- Browser -->
+    <string name="browser_title">المتصفح</string>
+    <string name="browser_enter_url">أدخل الرابط</string>
+
+    <!-- Common -->
+    <string name="save">حفظ</string>
+    <string name="loading">جاري التحميل…</string>
+    <string name="no_downloads">لا توجد تنزيلات</string>
+    <string name="error_generic">حدث خطأ</string>
+    <string name="error_engine">فشل في بدء محرك التنزيل</string>
+    <string name="error_connection">خطأ في الاتصال</string>
+    <string name="confirm">تأكيد</string>
+    <string name="delete">حذف</string>
+</resources>
