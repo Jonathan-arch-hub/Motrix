@@ -4,6 +4,8 @@ Download manager for Android powered by [aria2](https://aria2.github.io/). Porte
 
 ## Screens
 
+[Download for Android](https://github.com/Jonathan-arch-hub/Motrix/releases/tag/v1.0.0).
+
 | Screen | Description |
 |--------|-------------|
 | **TaskList** | Main screen with subnav tabs (Active / Waiting / Stopped), panel header with global action buttons, download cards with animated progress bar, percentage, speed (↑↓), ETA, status pill, floating speedometer |
