@@ -73,13 +73,26 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun attachBaseContext(newBase: Context) {
-        val lang = pendingLocale
-        val locale = Locale(lang)
-        Locale.setDefault(locale)
-        val config = Configuration(newBase.resources.configuration)
-        config.setLocale(locale)
-        super.attachBaseContext(newBase.createConfigurationContext(config))
+        val lang = newBase.getSharedPreferences(PreferenceDataStore.LEGACY_PREFS, Context.MODE_PRIVATE)
+            .getString(PreferenceDataStore.LEGACY_LOCALE, pendingLocale)
+            .orEmpty()
+            .toAppLanguage()
+        pendingLocale = lang
+        super.attachBaseContext(newBase.withLocale(lang))
     }
+}
+
+private fun Context.withLocale(language: String): Context {
+    val locale = Locale(language)
+    Locale.setDefault(locale)
+    val config = Configuration(resources.configuration)
+    config.setLocale(locale)
+    return createConfigurationContext(config)
+}
+
+private fun String.toAppLanguage(): String = when {
+    startsWith("ar") -> "ar"
+    else -> "en"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

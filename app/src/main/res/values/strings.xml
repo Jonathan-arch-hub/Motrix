@@ -112,6 +112,8 @@
     <!-- Browser -->
     <string name="browser_title">Browser</string>
     <string name="browser_enter_url">Enter URL</string>
+    <string name="browser_download_captured">Download link captured</string>
+    <string name="browser_unsupported_download">This page uses an in-browser download that cannot be captured. Try the visible download link or copy the final link.</string>
 
     <!-- Common -->
     <string name="save">Save</string>

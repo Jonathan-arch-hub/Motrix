@@ -26,6 +26,7 @@ import java.net.URLDecoder
 @Composable
 fun AddTaskScreen(
     onBack: () -> Unit,
+    initialUrl: String = "",
     viewModel: AddTaskViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -57,13 +58,6 @@ fun AddTaskScreen(
 
     val addStartedText = stringResource(R.string.add_task_started)
 
-    LaunchedEffect(Unit) {
-        viewModel.taskAdded.collect {
-            Toast.makeText(context, addStartedText, Toast.LENGTH_SHORT).show()
-            onBack()
-        }
-    }
-
     fun extractFileName(url: String): String {
         return try {
             val cleanUrl = url.trim()
@@ -72,6 +66,21 @@ fun AddTaskScreen(
             val name = path.substringAfterLast('/')
             if (name.isNotEmpty() && !name.contains("?") && !name.contains("=") && name.length > 3) name else ""
         } catch (_: Exception) { "" }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.taskAdded.collect {
+            Toast.makeText(context, addStartedText, Toast.LENGTH_SHORT).show()
+            onBack()
+        }
+    }
+
+    LaunchedEffect(initialUrl) {
+        if (initialUrl.isNotBlank() && urls.isBlank()) {
+            urls = initialUrl
+            val extracted = extractFileName(initialUrl)
+            if (extracted.isNotEmpty()) out = extracted
+        }
     }
 
     Scaffold(

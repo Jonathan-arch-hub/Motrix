@@ -224,6 +224,34 @@ class DownloadManager(private val context: Context) {
         try { client?.forceRemove(gid); Result.success(Unit) } catch (e: Exception) { Result.failure(e) }
     }
 
+    suspend fun deleteTask(gid: String): Result<Unit> = withContext(Dispatchers.IO) {
+        val c = client ?: return@withContext Result.failure(Exception("RPC client not connected"))
+        var removed = false
+        var lastError: Exception? = null
+
+        try {
+            c.forceRemove(gid)
+            removed = true
+        } catch (e: Exception) {
+            lastError = e
+            try {
+                c.remove(gid)
+                removed = true
+            } catch (removeError: Exception) {
+                lastError = removeError
+            }
+        }
+
+        try {
+            c.removeDownloadResult(gid)
+            removed = true
+        } catch (e: Exception) {
+            if (!removed) lastError = e
+        }
+
+        if (removed) Result.success(Unit) else Result.failure(lastError ?: Exception("Failed to delete task"))
+    }
+
     suspend fun fetchActiveTasks(): Result<List<DownloadTask>> = withContext(Dispatchers.IO) {
         try { Result.success((client?.tellActive() ?: emptyList()).map { parseTask(it) }) }
         catch (e: Exception) { Result.failure(e) }
@@ -241,10 +269,28 @@ class DownloadManager(private val context: Context) {
 
     suspend fun fetchDownloadingTasks(): Result<List<DownloadTask>> = withContext(Dispatchers.IO) {
         try {
-            val active = client?.tellActive() ?: emptyList()
-            val waiting = client?.tellWaiting() ?: emptyList()
-            Result.success((active + waiting).map { parseTask(it) })
-        } catch (e: Exception) { Result.failure(e) }
+            val c = client
+            if (c == null) {
+                Log.w(TAG, "fetchDownloadingTasks: client is null")
+                return@withContext Result.failure(Exception("RPC client is null"))
+            }
+            if (!c.isConnected()) {
+                Log.w(TAG, "fetchDownloadingTasks: client not connected, attempting reconnect...")
+                val reconnected = c.connect()
+                Log.i(TAG, "fetchDownloadingTasks: reconnect result = $reconnected")
+                if (!reconnected) {
+                    return@withContext Result.failure(Exception("RPC not connected, reconnect failed"))
+                }
+            }
+            val active = c.tellActive() ?: emptyList()
+            val waiting = c.tellWaiting() ?: emptyList()
+            val all = active + waiting
+            Log.d(TAG, "fetchDownloadingTasks: active=${active.size} waiting=${waiting.size} total=${all.size}")
+            Result.success(all.map { parseTask(it) })
+        } catch (e: Exception) {
+            Log.w(TAG, "fetchDownloadingTasks FAILED: ${e.message}")
+            Result.failure(e)
+        }
     }
 
     suspend fun fetchTaskDetail(gid: String): Result<DownloadTask> = withContext(Dispatchers.IO) {

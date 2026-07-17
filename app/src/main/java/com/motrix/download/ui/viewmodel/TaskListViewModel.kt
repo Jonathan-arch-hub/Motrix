@@ -70,25 +70,34 @@ class TaskListViewModel @Inject constructor(
 
     fun autoStartEngine() {
         if (!_isEngineRunning.value) {
-            startEngine()
+            DownloadForegroundService.startEngine(getApplication())
         }
     }
 
     fun pauseTask(gid: String) {
-        viewModelScope.launch { downloadManager.pauseTask(gid) }
+        viewModelScope.launch {
+            downloadManager.pauseTask(gid)
+            refreshAll()
+        }
     }
 
     fun resumeTask(gid: String) {
-        viewModelScope.launch { downloadManager.resumeTask(gid) }
+        viewModelScope.launch {
+            downloadManager.resumeTask(gid)
+            refreshAll()
+        }
     }
 
     fun removeTask(gid: String) {
-        viewModelScope.launch { downloadManager.forceRemoveTask(gid) }
+        viewModelScope.launch {
+            downloadManager.deleteTask(gid)
+            refreshAll()
+        }
     }
 
     fun removeTaskWithFile(task: DownloadTask) {
         viewModelScope.launch {
-            downloadManager.forceRemoveTask(task.gid)
+            downloadManager.deleteTask(task.gid)
             // Delete files from storage
             for (file in task.files) {
                 try {
@@ -111,19 +120,29 @@ class TaskListViewModel @Inject constructor(
                     }
                 } catch (_: Exception) { }
             }
+            refreshAll()
         }
     }
 
     fun pauseAll() {
-        viewModelScope.launch { downloadManager.pauseAllTask() }
+        viewModelScope.launch {
+            downloadManager.pauseAllTask()
+            refreshAll()
+        }
     }
 
     fun resumeAll() {
-        viewModelScope.launch { downloadManager.resumeAllTask() }
+        viewModelScope.launch {
+            downloadManager.resumeAllTask()
+            refreshAll()
+        }
     }
 
     fun purgeCompleted() {
-        viewModelScope.launch { downloadManager.purgeCompleted() }
+        viewModelScope.launch {
+            downloadManager.purgeCompleted()
+            refreshAll()
+        }
     }
 
     private fun startAutoRefresh() {
@@ -138,21 +157,14 @@ class TaskListViewModel @Inject constructor(
 
     private fun refresh() {
         viewModelScope.launch {
-            when (_selectedTab.value) {
-                TaskListTab.ACTIVE -> {
-                    val result = downloadManager.fetchActiveTasks()
-                    result.onSuccess { _activeTasks.value = it }
-                }
-                TaskListTab.WAITING -> {
-                    val result = downloadManager.fetchWaitingTasks()
-                    result.onSuccess { _waitingTasks.value = it }
-                }
-                TaskListTab.STOPPED -> {
-                    val result = downloadManager.fetchStoppedTasks()
-                    result.onSuccess { _stoppedTasks.value = it }
-                }
-            }
+            refreshAll()
         }
+    }
+
+    private suspend fun refreshAll() {
+        downloadManager.fetchActiveTasks().onSuccess { _activeTasks.value = it }
+        downloadManager.fetchWaitingTasks().onSuccess { _waitingTasks.value = it }
+        downloadManager.fetchStoppedTasks().onSuccess { _stoppedTasks.value = it }
     }
 
     override fun onCleared() {

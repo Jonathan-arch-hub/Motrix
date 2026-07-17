@@ -13,6 +13,8 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 class PreferenceDataStore(private val context: Context) {
 
     companion object {
+        const val LEGACY_PREFS = "motrix_runtime_settings"
+        const val LEGACY_LOCALE = "locale"
         val KEY_THEME = stringPreferencesKey("theme")
         val KEY_LOCALE = stringPreferencesKey("locale")
         val KEY_DOWNLOAD_DIR = stringPreferencesKey("download_dir")
@@ -53,7 +55,13 @@ class PreferenceDataStore(private val context: Context) {
     val resumeAllOnStart: Flow<Boolean> = context.dataStore.data.map { it[KEY_RESUME_ALL_ON_START] ?: false }
 
     suspend fun setTheme(value: String) { context.dataStore.edit { it[KEY_THEME] = value } }
-    suspend fun setLocale(value: String) { context.dataStore.edit { it[KEY_LOCALE] = value } }
+    suspend fun setLocale(value: String) {
+        context.getSharedPreferences(LEGACY_PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putString(LEGACY_LOCALE, value)
+            .apply()
+        context.dataStore.edit { it[KEY_LOCALE] = value }
+    }
     suspend fun setDownloadDir(value: String) { context.dataStore.edit { it[KEY_DOWNLOAD_DIR] = value } }
     suspend fun setMaxConcurrentDownloads(value: Int) { context.dataStore.edit { it[KEY_MAX_CONCURRENT_DOWNLOADS] = value } }
     suspend fun setMaxConnectionPerServer(value: Int) { context.dataStore.edit { it[KEY_MAX_CONNECTION_PER_SERVER] = value } }

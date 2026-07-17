@@ -128,7 +128,10 @@ class JSONRPCClient(
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "RPC call failed: ${e.message}")
-                if (e !is JSONRPCError) connected = false
+                if (e !is JSONRPCError) {
+                    Log.w(TAG, "RPC call: resetting connected=false due to: ${e.message}")
+                    connected = false
+                }
                 deferred.completeExceptionally(e)
             }
         }.start()

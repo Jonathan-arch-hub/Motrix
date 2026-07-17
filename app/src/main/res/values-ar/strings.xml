@@ -112,6 +112,8 @@
     <!-- Browser -->
     <string name="browser_title">المتصفح</string>
     <string name="browser_enter_url">أدخل الرابط</string>
+    <string name="browser_download_captured">تم التقاط رابط التنزيل</string>
+    <string name="browser_unsupported_download">هذه الصفحة تستخدم تنزيلاً داخل المتصفح لا يمكن التقاطه. جرّب زر التنزيل الظاهر أو انسخ الرابط النهائي.</string>
 
     <!-- Common -->
     <string name="save">حفظ</string>

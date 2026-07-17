@@ -101,17 +101,31 @@ class Aria2Client(
     }
 
     suspend fun tellActive(keys: List<String> = emptyList()): List<com.google.gson.JsonObject> = withContext(Dispatchers.IO) {
-        val params = mutableListOf<Any>()
-        if (keys.isNotEmpty()) params.add(keys)
-        val result = client.call("tellActive", *params.toTypedArray()).await()
-        parseTaskList(result)
+        try {
+            val params = mutableListOf<Any>()
+            if (keys.isNotEmpty()) params.add(keys)
+            val result = client.call("tellActive", *params.toTypedArray()).await()
+            val parsed = parseTaskList(result)
+            Log.d(TAG, "tellActive: returned ${parsed.size} tasks")
+            parsed
+        } catch (e: Exception) {
+            Log.w(TAG, "tellActive FAILED: ${e.message}")
+            throw e
+        }
     }
 
     suspend fun tellWaiting(offset: Int = 0, num: Int = 20, keys: List<String> = emptyList()): List<com.google.gson.JsonObject> = withContext(Dispatchers.IO) {
-        val params = mutableListOf<Any>(offset, num)
-        if (keys.isNotEmpty()) params.add(keys)
-        val result = client.call("tellWaiting", *params.toTypedArray()).await()
-        parseTaskList(result)
+        try {
+            val params = mutableListOf<Any>(offset, num)
+            if (keys.isNotEmpty()) params.add(keys)
+            val result = client.call("tellWaiting", *params.toTypedArray()).await()
+            val parsed = parseTaskList(result)
+            Log.d(TAG, "tellWaiting(offset=$offset,num=$num): returned ${parsed.size} tasks")
+            parsed
+        } catch (e: Exception) {
+            Log.w(TAG, "tellWaiting FAILED: ${e.message}")
+            throw e
+        }
     }
 
     suspend fun tellStopped(offset: Int = 0, num: Int = 20, keys: List<String> = emptyList()): List<com.google.gson.JsonObject> = withContext(Dispatchers.IO) {

@@ -307,6 +307,36 @@ MotrixAndroid/
 | Download errorCode=3 (Resource not found) | URL expired or server issue | Try the link in browser first |
 | App crashes on locale change | Resources not reloaded | Force stop and reopen app |
 | Gradle build fails: SDK not found | ANDROID_HOME not set | Run `export ANDROID_HOME=/opt/android-sdk` |
+| Blank notification | Custom icon tint issue (fixed in v1.1.0) | Use system download icon |
+
+## Download APK
+
+Pre-built APKs are available in the `dist/` directory:
+
+| File | Size | Type | Signing |
+|------|------|------|---------|
+| `dist/Motrix-v1.1.0-release.apk` | 16 MB | Release (signed) | `motrix-release.jks` (included) |
+| `dist/Motrix-v1.1.0-debug.apk` | 21 MB | Debug (unsigned) | Auto-signed with debug key |
+
+### Installation
+
+```bash
+# Install release APK on connected device
+adb install dist/Motrix-v1.1.0-release.apk
+
+# Or for debug
+adb install dist/Motrix-v1.1.0-debug.apk
+```
+
+### Verify APK signature
+
+```bash
+apksigner verify --print-certs dist/Motrix-v1.1.0-release.apk
+```
+
+### Build from source (recommended for production)
+
+See [Building](#building) section above. Building from source ensures the aria2 binary matches your device architecture.
 
 ## License
 

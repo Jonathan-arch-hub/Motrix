@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.motrix.download.MainActivity
 import com.motrix.download.R
+import com.motrix.download.data.datastore.PreferenceDataStore
 import com.motrix.download.ui.viewmodel.SettingsViewModel
 import java.util.Locale
 
@@ -48,6 +49,10 @@ fun SettingsScreen(
             "ar" -> "ar"
             else -> "en"
         }
+        context.getSharedPreferences(PreferenceDataStore.LEGACY_PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putString(PreferenceDataStore.LEGACY_LOCALE, lang)
+            .apply()
         MainActivity.pendingLocale = lang
         val loc = Locale(lang)
         Locale.setDefault(loc)

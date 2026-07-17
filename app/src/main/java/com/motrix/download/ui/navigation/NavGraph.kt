@@ -1,6 +1,8 @@
 package com.motrix.download.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -27,8 +29,14 @@ fun NavGraph(navController: NavHostController) {
         }
 
         composable(Screen.AddTask.route) {
+            val pastedUrl by navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.getStateFlow("pasted_url", "")
+                ?.collectAsState()
+                ?: androidx.compose.runtime.mutableStateOf("")
             AddTaskScreen(
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                initialUrl = pastedUrl
             )
         }
 
@@ -51,8 +59,10 @@ fun NavGraph(navController: NavHostController) {
             BrowserScreen(
                 onBack = { navController.popBackStack() },
                 onUrlPaste = { url ->
-                    navController.previousBackStackEntry?.savedStateHandle?.set("pasted_url", url)
-                    navController.popBackStack()
+                    navController.navigate(Screen.AddTask.route) {
+                        launchSingleTop = true
+                    }
+                    navController.currentBackStackEntry?.savedStateHandle?.set("pasted_url", url)
                 }
             )
         }

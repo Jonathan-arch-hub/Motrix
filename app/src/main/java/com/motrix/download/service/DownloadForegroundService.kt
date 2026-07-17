@@ -1,22 +1,24 @@
 package com.motrix.download.service
 
 import android.app.Notification
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.motrix.download.MainActivity
 import com.motrix.download.MotrixApp
-import com.motrix.download.R
 import com.motrix.download.domain.model.DownloadTask
+import com.motrix.download.domain.model.TaskStatus
 import com.motrix.download.engine.DownloadManager
 import com.motrix.download.util.FormatUtils
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collectLatest
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -31,11 +33,32 @@ class DownloadForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
+        Log.i(TAG, "╔══════════════════════════════════╗")
+        Log.i(TAG, "║  SERVICE onCreate()              ║")
+        Log.i(TAG, "╚══════════════════════════════════╝")
         super.onCreate()
-        startForeground(MotrixApp.NOTIFICATION_ID_SERVICE, createNotification("Starting engine...", 0, 0))
+        val notif = createNotification(NotificationState(
+            title = "Motrix",
+            text = "Starting engine...",
+            progress = 0,
+            indeterminate = false,
+            activeCount = 0,
+            expandedLines = listOf("Starting download engine..."),
+            subText = ""
+        ))
+        Log.i(TAG, "[onCreate] Calling startForeground(${MotrixApp.NOTIFICATION_ID_SERVICE})")
+        startForeground(MotrixApp.NOTIFICATION_ID_SERVICE, notif)
+        Log.i(TAG, "[onCreate] startForeground OK")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.i(TAG, "╔══════════════════════════════════╗")
+        Log.i(TAG, "║  SERVICE onStartCommand()        ║")
+        Log.i(TAG, "╚══════════════════════════════════╝")
+        Log.i(TAG, "  intent?.action = ${intent?.action}")
+        Log.i(TAG, "  flags = $flags")
+        Log.i(TAG, "  startId = $startId")
+
         when (intent?.action) {
             ACTION_START_ENGINE -> {
                 val options = intent.getStringExtra(EXTRA_OPTIONS) ?: ""
@@ -90,69 +113,245 @@ class DownloadForegroundService : Service() {
     }
 
     private suspend fun ensureEngineRunning() {
-        Log.i(TAG, "ensureEngineRunning: isEngineRunning=${downloadManager.isEngineRunning.value}")
         if (!downloadManager.isEngineRunning.value) {
-            Log.i(TAG, "Engine not running, starting...")
+            Log.i(TAG, "[ensureEngineRunning] Engine not running, starting...")
             startEngine()
         }
     }
 
-    private suspend fun startEngine(options: Map<String, String> = emptyMap()) {
-        val started = downloadManager.startEngine(options)
-        if (started) {
-            updateNotification("Engine running", 0, 0)
+    private fun ensurePollingRunning() {
+        if (statJob?.isActive != true) {
+            Log.i(TAG, "[ensurePollingRunning] statJob not active, starting polling")
             startStatPolling()
-            try { downloadManager.resumeAllTask() } catch (_: Exception) { }
+        }
+    }
+
+    private suspend fun startEngine(options: Map<String, String> = emptyMap()) {
+        Log.i(TAG, "╔══════════════════════════════════╗")
+        Log.i(TAG, "║  SERVICE startEngine()           ║")
+        Log.i(TAG, "╚══════════════════════════════════╝")
+        Log.i(TAG, "  options = $options")
+        try {
+            Log.i(TAG, "  calling downloadManager.startEngine()...")
+            val started = downloadManager.startEngine(options)
+            Log.i(TAG, "  downloadManager.startEngine() returned $started")
+            if (started) {
+                Log.i(TAG, "  Engine started OK, updating notification")
+                updateNotificationNow(text = "Engine running", expandedLines = listOf("Engine running"))
+                Log.i(TAG, "  Starting stat polling...")
+                startStatPolling()
+                Log.i(TAG, "  Resuming all tasks...")
+                try { downloadManager.resumeAllTask() } catch (e: Exception) {
+                    Log.w(TAG, "  resumeAllTask() failed: ${e.message}")
+                }
+                Log.i(TAG, "  startEngine() complete")
+            } else {
+                val err = downloadManager.engineError.value
+                Log.e(TAG, "  Engine FAILED to start: $err")
+                updateNotificationNow(text = "Engine failed", expandedLines = listOf("Failed to start engine: $err"))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "╔═══ CRASH in startEngine() ═══╗")
+            Log.e(TAG, "  ${e.javaClass.name}: ${e.message}")
+            e.printStackTrace()
+            Log.e(TAG, "╚══════════════════════════════╝")
+            updateNotificationNow(text = "Engine error: ${e.message}", expandedLines = listOf("Engine error: ${e.message}"))
         }
     }
 
     private fun stopEngine() {
+        Log.i(TAG, "[stopEngine] cancelling polling + stopping engine")
         statJob?.cancel()
         downloadManager.stopEngine()
     }
 
     private fun startStatPolling() {
         statJob?.cancel()
-        statJob = serviceScope.launch(Dispatchers.IO) {
+        Log.i(TAG, "╔══════════════════════════════════╗")
+        Log.i(TAG, "║  SERVICE startStatPolling()      ║")
+        Log.i(TAG, "╚══════════════════════════════════╝")
+        statJob = serviceScope.launch(Dispatchers.Default) {
+            Log.i(TAG, "[polling] Loop started on ${Thread.currentThread().name}")
+            var iteration = 0
+            var lastLogTime = System.currentTimeMillis()
             while (isActive) {
-                delay(1500)
+                iteration++
+                val now = System.currentTimeMillis()
                 try {
-                    val stat = downloadManager.globalStat.value
+                    Log.d(TAG, "[polling#$iteration] fetchDownloadingTasks()...")
                     val tasksResult = downloadManager.fetchDownloadingTasks()
-                    val tasks = tasksResult.getOrNull() ?: emptyList()
-
-                    var totalLength = 0L
-                    var completedLength = 0L
-                    var totalSpeed = 0L
-                    var activeCount = 0
-
-                    for (t in tasks) {
-                        totalLength += t.totalLength
-                        completedLength += t.completedLength
-                        totalSpeed += t.downloadSpeed
-                        if (t.status == com.motrix.download.domain.model.TaskStatus.ACTIVE) activeCount++
-                    }
-
-                    val progress = if (totalLength > 0) (completedLength * 100 / totalLength).toInt() else 0
-                    val speedText = "${FormatUtils.bytesToSize(stat.downloadSpeed)}/s ↓"
-                    val statusText = if (activeCount > 0) {
-                        "$speedText | $activeCount active"
+                    Log.d(TAG, "[polling#$iteration] result.isSuccess = ${tasksResult.isSuccess}")
+                    val tasks = tasksResult.getOrNull()
+                    if (tasks != null) {
+                        Log.d(TAG, "[polling#$iteration] tasks count = ${tasks.size}")
+                        if (tasks.isNotEmpty()) {
+                            tasks.forEachIndexed { i, t ->
+                                val pct = if (t.totalLength > 0) (t.completedLength * 100 / t.totalLength) else 0
+                                Log.d(TAG, "[polling#$iteration]   task[$i]: gid=${t.gid} status=${t.status} " +
+                                    "name=${t.displayName} progress=${pct}% " +
+                                    "dl=${FormatUtils.bytesToSize(t.downloadSpeed)}/s " +
+                                    "${FormatUtils.bytesToSize(t.completedLength)}/${FormatUtils.bytesToSize(t.totalLength)}")
+                            }
+                        } else {
+                            Log.d(TAG, "[polling#$iteration]   (empty list)")
+                        }
                     } else {
-                        "Waiting…"
+                        val error = tasksResult.exceptionOrNull()
+                        Log.w(TAG, "[polling#$iteration] fetchDownloadingTasks() FAILED: ${error?.message}")
                     }
-                    updateNotification(statusText, progress, 100, tasks)
-                } catch (_: Exception) { }
+                    val state = buildNotificationState(tasks ?: emptyList())
+                    Log.d(TAG, "[polling#$iteration] state: title='${state.title}' text='${state.text}' " +
+                        "progress=${state.progress} indeterminate=${state.indeterminate} " +
+                        "expandedLines=${state.expandedLines.size} subText='${state.subText}'")
+                    updateNotificationNow(state) { s ->
+                        Log.d(TAG, "[polling#$iteration] posting: title='Motrix' text='${s.text}' " +
+                            "progress=${s.progress}/100 indeterminate=${s.indeterminate} " +
+                            "expanded=${s.expandedLines.size} lines")
+                    }
+                    if (now - lastLogTime > 5000) {
+                        Log.i(TAG, "[polling#$iteration] OK — ${tasks?.size ?: 0} tasks, progress=${state.progress}%")
+                        lastLogTime = now
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "[polling#$iteration] UNCAUGHT EXCEPTION: ${e.javaClass.name}: ${e.message}")
+                    Log.e(TAG, "[polling#$iteration] stacktrace:", e)
+                }
+                delay(1000)
+            }
+            Log.i(TAG, "[polling] Loop ended (isActive=false)")
+        }
+    }
+
+    private fun buildNotificationState(tasks: List<DownloadTask>): NotificationState {
+        if (tasks.isEmpty()) {
+            val engineRunning = downloadManager.isEngineRunning.value
+            val engineErr = downloadManager.engineError.value
+            Log.d(TAG, "[state] No tasks, engineRunning=$engineRunning error=$engineErr")
+            return NotificationState(
+                title = "Motrix",
+                text = if (engineRunning) "Waiting for downloads..." else "Engine not running",
+                progress = 0,
+                indeterminate = false,
+                activeCount = 0,
+                expandedLines = listOf(
+                    if (engineRunning) "Engine running, no active downloads"
+                    else if (engineErr != null) "Engine error: $engineErr"
+                    else "Engine is not running"
+                ),
+                subText = ""
+            )
+        }
+
+        val totalLength = tasks.sumOf { it.totalLength.coerceAtLeast(0) }
+        val completedLength = tasks.sumOf { it.completedLength.coerceAtLeast(0) }
+        val totalSpeed = tasks.sumOf { it.downloadSpeed.coerceAtLeast(0) }
+        val totalUpload = tasks.sumOf { it.uploadSpeed.coerceAtLeast(0) }
+        val activeCount = tasks.count { it.status == TaskStatus.ACTIVE || it.status == TaskStatus.SEEDING }
+
+        val hasSize = totalLength > 0
+        val progress = if (hasSize) (completedLength * 100 / totalLength).toInt().coerceIn(0, 100) else 0
+
+        // Compact text
+        val compact = buildString {
+            if (hasSize) append("$progress%")
+            if (totalSpeed > 0) {
+                if (isNotEmpty()) append(" • ")
+                append("${FormatUtils.bytesToSize(totalSpeed)}/s ↓")
+            }
+            if (hasSize && totalSpeed > 0) {
+                val eta = (totalLength - completedLength).coerceAtLeast(0) / totalSpeed.coerceAtLeast(1)
+                if (eta > 0) {
+                    append(" • ")
+                    append(FormatUtils.formatEta(eta))
+                }
+            }
+            if (isEmpty()) {
+                append("${FormatUtils.bytesToSize(completedLength)} / ${FormatUtils.bytesToSize(totalLength)}")
+            }
+        }
+
+        // Size sub-text
+        val sizeText = if (hasSize) {
+            "${FormatUtils.bytesToSize(completedLength)} / ${FormatUtils.bytesToSize(totalLength)}"
+        } else {
+            "${FormatUtils.bytesToSize(completedLength)} downloaded"
+        }
+
+        // Expanded lines (up to 5 tasks) — no duplicate of compact text
+        val expandedLines = mutableListOf<String>()
+        expandedLines.add("$sizeText • $activeCount active" +
+            if (totalUpload > 0) " • ↑ ${FormatUtils.bytesToSize(totalUpload)}/s" else "")
+        for (task in tasks.take(5)) {
+            val pct = if (task.totalLength > 0)
+                (task.completedLength * 100 / task.totalLength).toInt().coerceIn(0, 100) else 0
+            val ds = FormatUtils.bytesToSize(task.downloadSpeed)
+            val us = FormatUtils.bytesToSize(task.uploadSpeed)
+            val sz = if (task.totalLength > 0)
+                "${FormatUtils.bytesToSize(task.completedLength)}/${FormatUtils.bytesToSize(task.totalLength)}"
+                else FormatUtils.bytesToSize(task.completedLength)
+            val eta = if (task.totalLength > 0 && task.downloadSpeed > 0)
+                FormatUtils.formatEta((task.totalLength - task.completedLength).coerceAtLeast(0) / task.downloadSpeed)
+                else null
+            expandedLines.add("── ${task.displayName} — $pct% • $ds/s ↓" +
+                if (task.uploadSpeed > 0) " ↑ $us/s" else "" +
+                " • $sz" +
+                if (eta != null) " • $eta" else "")
+        }
+        val titleText = tasks.firstOrNull { it.status == TaskStatus.ACTIVE }
+            ?.displayName?.ifBlank { null }
+            ?: tasks.first().displayName.ifBlank { "Download" }
+
+        val showBar = activeCount > 0
+        val isIndeterminate = showBar && totalLength == 0L
+        val displayProgress = if (!showBar) 0 else progress
+
+        return NotificationState(
+            title = titleText,
+            text = "$titleText — $compact",
+            progress = displayProgress,
+            indeterminate = isIndeterminate,
+            activeCount = activeCount,
+            expandedLines = expandedLines,
+            subText = sizeText,
+            showProgress = showBar
+        )
+    }
+
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    private fun updateNotificationNow(state: NotificationState, log: ((NotificationState) -> Unit)? = null) {
+        val notification = createNotification(state)
+        log?.invoke(state)
+        mainHandler.post {
+            try {
+                startForeground(MotrixApp.NOTIFICATION_ID_SERVICE, notification)
+                Log.d(TAG, "[notify] startForeground() OK")
+            } catch (e: Exception) {
+                Log.w(TAG, "[notify] startForeground() threw: ${e.message}")
+                try {
+                    val mgr = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    mgr.notify(MotrixApp.NOTIFICATION_ID_SERVICE, notification)
+                    Log.d(TAG, "[notify] notify() fallback OK")
+                } catch (e2: Exception) {
+                    Log.e(TAG, "[notify] notify() ALSO failed: ${e2.message}")
+                }
             }
         }
     }
 
-    private fun updateNotification(text: String, progress: Int, max: Int, tasks: List<DownloadTask> = emptyList()) {
-        val notification = createNotification(text, progress, max, tasks)
-        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
-        manager.notify(MotrixApp.NOTIFICATION_ID_SERVICE, notification)
+    private fun updateNotificationNow(text: String, expandedLines: List<String>) {
+        updateNotificationNow(NotificationState(
+            title = "Motrix",
+            text = text,
+            progress = 0,
+            indeterminate = false,
+            activeCount = 0,
+            expandedLines = expandedLines,
+            subText = ""
+        ))
     }
 
-    private fun createNotification(text: String, progress: Int, max: Int, tasks: List<DownloadTask> = emptyList()): Notification {
+    private fun createNotification(state: NotificationState): Notification {
         val pendingIntent = PendingIntent.getActivity(
             this, 0,
             Intent(this, MainActivity::class.java),
@@ -177,37 +376,42 @@ class DownloadForegroundService : Service() {
             PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Build expanded inbox style with per-task details
-        val inboxStyle = NotificationCompat.InboxStyle()
-            .setBigContentTitle("Motrix — $text")
+        val expandedText = state.expandedLines.joinToString("\n")
 
-        // Show individual download tasks in expanded view
-        for (t in tasks) {
-            val pct = if (t.totalLength > 0) (t.completedLength * 100 / t.totalLength).toInt() else 0
-            val speed = if (t.downloadSpeed > 0) "${FormatUtils.bytesToSize(t.downloadSpeed)}/s" else ""
-            val line = if (speed.isNotEmpty()) "${t.displayName} — $pct% ($speed)"
-                        else "${t.displayName} — $pct%"
-            inboxStyle.addLine(line)
-        }
-
-        if (tasks.isEmpty()) {
-            inboxStyle.addLine("No active downloads")
-        }
-
-        return NotificationCompat.Builder(this, MotrixApp.CHANNEL_DOWNLOAD)
-            .setContentTitle("Motrix")
-            .setContentText(text)
+        val builder = NotificationCompat.Builder(this, MotrixApp.CHANNEL_DOWNLOAD)
+            .setContentTitle(state.title)
+            .setContentText(state.text)
+            .setSubText(state.subText)
             .setSmallIcon(android.R.drawable.stat_sys_download)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
             .setSilent(true)
-            .setProgress(max, progress, max == 0)
-            .setStyle(inboxStyle)
+            .setOnlyAlertOnce(true)
+            .setShowWhen(false)
+            .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL)
+            .setNumber(state.activeCount)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(expandedText))
             .addAction(android.R.drawable.ic_media_pause, "Pause", pauseIntent)
             .addAction(android.R.drawable.ic_media_play, "Resume", resumeIntent)
             .addAction(android.R.drawable.ic_media_ff, "Stop", stopIntent)
-            .build()
+
+        if (state.showProgress) {
+            builder.setProgress(100, state.progress, state.indeterminate)
+        }
+
+        return builder.build()
     }
+
+    private data class NotificationState(
+        val title: String,
+        val text: String,
+        val progress: Int,
+        val indeterminate: Boolean,
+        val activeCount: Int,
+        val expandedLines: List<String>,
+        val subText: String,
+        val showProgress: Boolean = false
+    )
 
     private suspend fun addUri(uri: String, options: Map<String, String>) {
         val uris = uri.lines()
@@ -251,6 +455,7 @@ class DownloadForegroundService : Service() {
     }
 
     override fun onDestroy() {
+        Log.i(TAG, "[onDestroy] cancelling scope + stopping engine")
         serviceScope.cancel()
         downloadManager.stopEngine()
         super.onDestroy()
